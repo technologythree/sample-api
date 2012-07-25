@@ -1,8 +1,18 @@
 SampleApi::Application.routes.draw do
-  
+
   namespace :api do   
-    resources :pages
+    resources :pages do
+      member do
+        post :publish
+        get  :total_words
+      end
+      collection do
+        get 'published'
+        get 'unpublished'
+      end
+    end
   end
+  
   # The priority is based upon order of creation:
   # first created -> highest priority.
 

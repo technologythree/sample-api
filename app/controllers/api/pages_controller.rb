@@ -1,7 +1,7 @@
 class Api::PagesController < ApplicationController
   respond_to :json, :xml
   
-  before_filter :find_a_page, :only => [:edit, :update, :destroy]
+  before_filter :find_a_page, :only => [:edit, :update, :destroy, :publish, :total_words]
   
   def index
      @pages = Page.all
@@ -36,8 +36,27 @@ class Api::PagesController < ApplicationController
 
    def destroy
      @page.delete
-     @message = {:message => 'The Page was successfully deleted'}
+     @message = {message: 'The Page was successfully deleted'}
      respond_with(@message)
+   end
+
+   def published
+     @pages = Page.published
+     respond_with(@pages)
+   end
+
+   def unpublished
+     @pages = Page.unpublished
+     respond_with(@pages)
+   end
+
+   def publish
+     @page.publish
+     respond_with(@page, location: published_api_pages_url)
+   end
+   
+   def total_words
+     respond_with(@page.total_words)
    end
 
 private

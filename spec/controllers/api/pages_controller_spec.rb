@@ -40,13 +40,13 @@ describe Api::PagesController do
   describe 'GET #edit' do
     it "should get a json edit page" do
       page = FactoryGirl.create(:page)
-      get :edit, :id => page
+      get :edit, id: page
       response.should render_template :json => "edit"
     end
     
     it "should get a xml edit page" do
       page = FactoryGirl.create(:page)
-      get :edit, :id => page
+      get :edit, id: page
       response.should render_template :xml => "edit"
     end
   end
@@ -54,13 +54,13 @@ describe Api::PagesController do
   describe "POST #create" do
     it "should save a new page" do
       expect {
-        post :create, :page => FactoryGirl.attributes_for(:page)
+        post :create, page: FactoryGirl.attributes_for(:page)
       }.to change(Page, :count).by(1)
     end
     
     it "should not save an invalid page" do
       expect {
-        post :create, :page => FactoryGirl.attributes_for(:invalid_page)
+        post :create, page: FactoryGirl.attributes_for(:invalid_page)
       }.to_not change(Page, :count)
     end
   end
@@ -91,6 +91,41 @@ describe Api::PagesController do
       expect{
        delete :destroy, id: @page
       }.to change(Page,:count).by(-1)
+    end
+  end
+  
+  describe 'Page Publish methods' do
+    it "should return Published page count" do
+       post :create, page: FactoryGirl.attributes_for(:page)
+       get :published
+       assigns(:pages).published.count.should == 1
+       assigns(:pages).unpublished.count.should == 0
+    end
+    
+    it "should return Unpublished page count" do
+       post :create, page: FactoryGirl.attributes_for(:page, published_on: nil)
+       get :unpublished
+       assigns(:pages).published.count.should == 0
+       assigns(:pages).unpublished.count.should == 1
+    end
+    
+    it "should return Unpublished page count for future publish date" do
+      post :create, page: FactoryGirl.attributes_for(:page, published_on: DateTime.tomorrow)
+      get :unpublished
+      assigns(:pages).published.count.should == 0
+      assigns(:pages).unpublished.count.should == 1
+    end
+
+    it "should mark a page as published" do
+      page = FactoryGirl.create(:page, published_on: nil)
+      post :publish, id: page
+      assigns(:page).published_on.should_not be_nil
+    end
+        
+    it "should return total page title and content count" do
+      page = FactoryGirl.create(:page)
+      get :total_words, id: page
+      assigns(:page).total_words.should eq (2)
     end
   end
 end
