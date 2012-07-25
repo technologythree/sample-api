@@ -1,13 +1,17 @@
 class Api::PagesController < ApplicationController
   respond_to :json, :xml
   
-  before_filter :find_a_page, :only => [:edit, :update, :destroy, :publish, :total_words]
+  before_filter :find_a_page, :only => [:show, :edit, :update, :destroy, :publish, :total_words]
 
   def index
      @pages = Page.all
      respond_with(@pages)
    end
 
+   def show
+     respond_with(@page)
+   end
+   
    def new
      @page = Page.new
      respond_with(@page)
@@ -68,7 +72,7 @@ class Api::PagesController < ApplicationController
    # curl http://localhost:3000/api/pages/1/total_words.json
    # curl http://localhost:3000/api/pages/1/total_words.xml
    def total_words
-     respond_with(@page.total_words)
+     respond_with(total_words: @page.total_words)
    end
 
 private

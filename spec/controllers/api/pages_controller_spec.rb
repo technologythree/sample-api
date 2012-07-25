@@ -95,37 +95,76 @@ describe Api::PagesController do
   end
   
   describe 'Page Publish methods' do
-    it "should return Published page count" do
-       post :create, page: FactoryGirl.attributes_for(:page)
-       get :published
-       assigns(:pages).published.count.should == 1
-       assigns(:pages).unpublished.count.should == 0
+    it "should get json list of Published pages" do
+      post :create, page: FactoryGirl.attributes_for(:page)
+      get :published, format: "json"
+      response.should be_ok
+      response.content_type.should eq "application/json"
+      b = JSON.parse(response.body)
+      b.should be_a_kind_of(Array)
+      b.size.should eq 1
+      b[0]['title'].should eq (FactoryGirl.create(:page).title)
+    end
+    
+    it "should get xml list of Published pages" do
+      post :create, page: FactoryGirl.attributes_for(:page)
+      get :published, format: "xml"
+      b = Nokogiri::XML(response.body)
+      response.should be_ok
+      response.content_type.should eq "application/xml"
+      b.css("title").text.should eq (FactoryGirl.create(:page).title)
     end
     
     it "should return Unpublished page count" do
        post :create, page: FactoryGirl.attributes_for(:page, published_on: nil)
-       get :unpublished
-       assigns(:pages).published.count.should == 0
-       assigns(:pages).unpublished.count.should == 1
+       get :unpublished, format: "json"
+       response.should be_ok
+       response.content_type.should eq "application/json"
+       b = JSON.parse(response.body)
+       b.should be_a_kind_of(Array)
+       b.size.should eq 1
+       b[0]['title'].should eq (FactoryGirl.create(:page).title)
     end
     
     it "should return Unpublished page count for future publish date" do
       post :create, page: FactoryGirl.attributes_for(:page, published_on: DateTime.tomorrow)
-      get :unpublished
-      assigns(:pages).published.count.should == 0
-      assigns(:pages).unpublished.count.should == 1
+      get :unpublished, format: "xml"
+      b = Nokogiri::XML(response.body)
+      response.should be_ok
+      response.content_type.should eq "application/xml"
+      b.css("title").text.should eq (FactoryGirl.create(:page).title)
     end
 
     it "should mark a page as published" do
       page = FactoryGirl.create(:page, published_on: nil)
-      post :publish, id: page
-      assigns(:page).published_on.should_not be_nil
+      post :publish, id: page, format: "json"
+      b = JSON.parse(response.body)
+      b['published_on'].should_not be_nil
     end
-        
-    it "should return total page title and content count" do
+    
+    it "should mark a page as published" do
+      page = FactoryGirl.create(:page, published_on: nil)
+      post :publish, id: page, format: "xml"
+      b = Nokogiri::XML(response.body)
+      b.css("published-on").text.should_not be_nil
+    end
+     
+    it "should return xml total page title and content count" do
       page = FactoryGirl.create(:page)
-      get :total_words, id: page
-      assigns(:page).total_words.should eq (2)
+      get :total_words, id: page, format: "xml"
+      response.should be_ok
+      response.content_type.should eq "application/xml"
+      b = Nokogiri::XML(response.body)
+      b.css("total-words").text.should eql("2")
+    end
+    
+    it "should return json total page title and content count" do
+      page = FactoryGirl.create(:page)
+      get :total_words, id: page, format: "json"
+      response.should be_ok
+      response.content_type.should eq "application/json"
+      b = JSON.parse(response.body)
+      b['total_words'].should eq (2)
     end
   end
 end
